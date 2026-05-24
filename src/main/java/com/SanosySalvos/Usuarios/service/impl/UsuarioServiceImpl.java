@@ -7,6 +7,8 @@ import com.SanosySalvos.Usuarios.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -23,23 +25,45 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public Usuario registrarUsuario(Usuario nuevoUsuario) {
-        // 1. Regla de negocio: Verificar si el correo ya existe
         if (usuarioRepository.existsByCorreoElectronico(nuevoUsuario.getCorreoElectronico())) {
             throw new RuntimeException("Error: El correo electrónico ya está registrado.");
         }
 
-        // 2. Lógica de seguridad: Encriptar la contraseña antes de guardar
-        // nuevoUsuario.setContrasena(passwordEncoder.encode(nuevoUsuario.getContrasena()));
+        // REGLA 1: Todo usuario nuevo nace estrictamente como CIUDADANO y validado
+        nuevoUsuario.setRol(RolUsuario.CIUDADANO);
+        nuevoUsuario.setCuentaValidada(true); 
 
-        // 3. Lógica por defecto: Si es ciudadano, su cuenta no requiere validación manual
-        if (nuevoUsuario.getRol() == RolUsuario.CIUDADANO) {
-            nuevoUsuario.setCuentaValidada(true);
-        } else {
-            nuevoUsuario.setCuentaValidada(false); // Clínicas y refugios esperan aprobación
+        return usuarioRepository.save(nuevoUsuario);
+    }
+
+    @Override
+    @Transactional
+    public Usuario solicitarCambioRol(Long usuarioId, RolUsuario nuevoRol, String urlDocumento) {
+        
+        List<RolUsuario> rolesPermitidos = List.of(
+                RolUsuario.VETERINARIA,
+                RolUsuario.REFUGIO,
+                RolUsuario.MUNICIPALIDAD
+        );
+
+        // Cambiamos el error genérico por un 403 FORBIDDEN
+        if (!rolesPermitidos.contains(nuevoRol)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado: El rol solicitado no es válido para una cuenta institucional.");
         }
 
-        // 4. Guardar en PostgreSQL
-        return usuarioRepository.save(nuevoUsuario);
+        // Cambiamos el error del documento por un 400 BAD REQUEST
+        if (urlDocumento == null || urlDocumento.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Es obligatorio adjuntar un documento válido.");
+        }
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        usuario.setRol(nuevoRol);
+        usuario.setCuentaValidada(false); 
+        usuario.setUrlDocumentoValidacion(urlDocumento); 
+
+        return usuarioRepository.save(usuario);
     }
 
     @Override

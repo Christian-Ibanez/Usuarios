@@ -3,7 +3,9 @@ package com.SanosySalvos.Usuarios.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +14,8 @@ import java.time.LocalDateTime;
 @Data // Anotación de Lombok para generar Getters, Setters y toString automáticamente
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class Usuario {
 
     @Id
@@ -32,13 +36,16 @@ public class Usuario {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private RolUsuario rol; // Enum que definirá si es CIUDADANO, VETERINARIA, etc.
+    private RolUsuario rol = RolUsuario.CIUDADANO; // <-- Asignación por defecto
 
     @Column(name = "cuenta_validada", nullable = false)
-    private boolean cuentaValidada = false; // Falso por defecto. Útil para aprobar veterinarias
+    private Boolean cuentaValidada = false; // Falso por defecto. Útil para aprobar veterinarias
 
     @Column(name = "fecha_registro", updatable = false)
     private LocalDateTime fechaRegistro;
+    
+    @Column(name = "url_documento_validacion", length = 500)
+    private String urlDocumentoValidacion; // Aquí guardaremos la ruta o enlace al PDF/Imagen
 
     // Método que se ejecuta automáticamente antes de guardar por primera vez en PostgreSQL
     @PrePersist

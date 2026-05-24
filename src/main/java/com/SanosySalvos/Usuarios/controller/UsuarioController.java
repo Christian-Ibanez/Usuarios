@@ -1,5 +1,6 @@
 package com.SanosySalvos.Usuarios.controller;
 
+import com.SanosySalvos.Usuarios.model.RolUsuario;
 import com.SanosySalvos.Usuarios.model.Usuario;
 import com.SanosySalvos.Usuarios.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -50,5 +51,17 @@ public class UsuarioController {
     public ResponseEntity<Usuario> aprobarCuentaInstitucional(@PathVariable Long id) {
         Usuario usuarioAprobado = usuarioService.aprobarCuentaInstitucional(id);
         return ResponseEntity.ok(usuarioAprobado);
+    }
+
+    // 5. Endpoint para que un ciudadano solicite cambiar su rol a Institución
+    // PUT http://localhost:8080/api/usuarios/5/solicitar-rol?nuevoRol=VETERINARIA&urlDocumento=ruta/al/certificado.pdf
+    @PutMapping("/{id}/solicitar-rol")
+    public ResponseEntity<Usuario> solicitarCambioRol(
+            @PathVariable Long id, 
+            @RequestParam RolUsuario nuevoRol,
+            @RequestParam String urlDocumento) { // Recibimos la ruta del documento
+            
+        Usuario usuarioActualizado = usuarioService.solicitarCambioRol(id, nuevoRol, urlDocumento);
+        return ResponseEntity.ok(usuarioActualizado);
     }
 }
