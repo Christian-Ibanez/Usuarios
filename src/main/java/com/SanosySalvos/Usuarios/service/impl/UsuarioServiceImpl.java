@@ -74,8 +74,15 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public List<Usuario> obtenerInstitucionesPendientes() {
-        // Retorna clínicas o refugios que aún no han sido validados
-        return usuarioRepository.findByRolAndCuentaValidadaFalse(RolUsuario.VETERINARIA); 
+        // 1. Definimos la lista de roles que consideramos como "Instituciones"
+        List<RolUsuario> rolesInstitucionales = List.of(
+                RolUsuario.VETERINARIA,
+                RolUsuario.REFUGIO,
+                RolUsuario.MUNICIPALIDAD
+        );
+
+        // 2. Pasamos la lista al nuevo método del repositorio
+        return usuarioRepository.findByRolInAndCuentaValidadaFalse(rolesInstitucionales);
     }
 
     @Override

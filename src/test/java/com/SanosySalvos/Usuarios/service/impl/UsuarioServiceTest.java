@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +57,7 @@ public class UsuarioServiceTest {
         // Assert (Afirmar): Verificamos que el resultado sea el esperado
         assertNotNull(resultado);
         assertEquals("juan@email.com", resultado.getCorreoElectronico());
-        assertTrue(resultado.isCuentaValidada()); // Porque es CIUDADANO, debería auto-validarse
+        assertTrue(resultado.getCuentaValidada()); // Porque es CIUDADANO, debería auto-validarse
         verify(usuarioRepository, times(1)).save(any(Usuario.class)); // Verifica que save() se llamó 1 vez
     }
 
@@ -96,7 +98,15 @@ public class UsuarioServiceTest {
         clinica.setRol(RolUsuario.VETERINARIA);
         clinica.setCuentaValidada(false);
         
-        when(usuarioRepository.findByRolAndCuentaValidadaFalse(RolUsuario.VETERINARIA))
+        // Creamos la lista que espera recibir el repositorio
+        List<RolUsuario> rolesInstitucionales = List.of(
+                RolUsuario.VETERINARIA,
+                RolUsuario.REFUGIO,
+                RolUsuario.MUNICIPALIDAD
+        );
+        
+        // Simulamos el nuevo método del repositorio que usa "In"
+        when(usuarioRepository.findByRolInAndCuentaValidadaFalse(rolesInstitucionales))
                 .thenReturn(Arrays.asList(clinica));
 
         // Act
@@ -123,7 +133,60 @@ public class UsuarioServiceTest {
         Usuario resultado = usuarioService.aprobarCuentaInstitucional(2L);
 
         // Assert
-        assertTrue(resultado.isCuentaValidada()); // Verificamos que el estado cambió a true
+        assertTrue(resultado.getCuentaValidada()); // Verificamos que el estado cambió a true
         verify(usuarioRepository, times(1)).save(clinicaPendiente);
     }
+
+    // --- PRUEBA: solicitarCambioRol (El camino feliz) ---
+    @Test
+    void testSolicitarCambioRol_Exito() {
+        // Arrange: Simulamos un ciudadano que ya existe en la base de datos
+        Usuario ciudadano = new Usuario();
+        ciudadano.setId(1L);
+        ciudadano.setRol(RolUsuario.CIUDADANO);
+        ciudadano.setCuentaValidada(true);
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(ciudadano));
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(ciudadano);
+
+        // Act: El ciudadano solicita ser veterinaria y adjunta su documento
+        Usuario resultado = usuarioService.solicitarCambioRol(1L, RolUsuario.VETERINARIA, "ruta_documento.pdf");
+
+        // Assert: Verificamos que el rol cambió, se bloqueó la cuenta y se guardó la URL
+        assertEquals(RolUsuario.VETERINARIA, resultado.getRol());
+        assertFalse(resultado.getCuentaValidada()); // Debe pasar a false
+        assertEquals("ruta_documento.pdf", resultado.getUrlDocumentoValidacion());
+        verify(usuarioRepository, times(1)).save(ciudadano);
+    }
+
+    // --- PRUEBA: solicitarCambioRol (Seguridad: Intento de ser Administrador) ---
+    @Test
+    void testSolicitarCambioRol_FallaPorRolInvalido() {
+        // Act & Assert: Intentamos pedir el rol de ADMINISTRADOR y esperamos que explote con un 403
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            usuarioService.solicitarCambioRol(1L, RolUsuario.ADMINISTRADOR, "ruta_documento.pdf");
+        });
+
+        // Verificamos que el código de error sea exactamente FORBIDDEN (403)
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        
+        // Verificamos que NUNCA se haya intentado guardar en la base de datos
+        verify(usuarioRepository, never()).save(any(Usuario.class));
+    }
+
+    // --- PRUEBA: solicitarCambioRol (Seguridad: Sin adjuntar documento) ---
+    @Test
+    void testSolicitarCambioRol_FallaPorDocumentoVacio() {
+        // Act & Assert: Pedimos un rol válido, pero enviamos la ruta vacía
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            usuarioService.solicitarCambioRol(1L, RolUsuario.VETERINARIA, ""); // String vacío
+        });
+
+        // Verificamos que el código de error sea exactamente BAD REQUEST (400)
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        
+        // Verificamos que NUNCA se haya intentado guardar en la base de datos
+        verify(usuarioRepository, never()).save(any(Usuario.class));
+    }
+
 }

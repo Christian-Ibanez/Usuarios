@@ -21,5 +21,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     List<Usuario> findByRol(RolUsuario rol);
 
     // 4. Buscar instituciones (ej. Clínicas) que aún no han sido validadas por el Administrador
-    List<Usuario> findByRolAndCuentaValidadaFalse(RolUsuario rol);
+    List<Usuario> findByRolInAndCuentaValidadaFalse(List<RolUsuario> roles);
 }
