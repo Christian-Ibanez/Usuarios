@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 import java.util.List;
 
@@ -17,13 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UsuarioServiceImpl implements UsuarioService {
 
-    // Inyección de dependencias a través del constructor (gracias a @RequiredArgsConstructor de Lombok)
     private final UsuarioRepository usuarioRepository;
-
     private final PasswordEncoder passwordEncoder;
     
-    // Nota: Aquí también inyectarías el PasswordEncoder de Spring Security más adelante
-    // private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -32,11 +29,9 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new RuntimeException("Error: El correo electrónico ya está registrado.");
         }
 
-        // REGLA 1: Todo usuario nuevo nace estrictamente como CIUDADANO y validado
         nuevoUsuario.setRol(RolUsuario.CIUDADANO);
         nuevoUsuario.setCuentaValidada(true); 
 
-        // AQUÍ: Encriptamos la contraseña antes de guardarla
         nuevoUsuario.setContrasena(passwordEncoder.encode(nuevoUsuario.getContrasena()));
 
         return usuarioRepository.save(nuevoUsuario);
@@ -52,12 +47,10 @@ public class UsuarioServiceImpl implements UsuarioService {
                 RolUsuario.MUNICIPALIDAD
         );
 
-        // Cambiamos el error genérico por un 403 FORBIDDEN
         if (!rolesPermitidos.contains(nuevoRol)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado: El rol solicitado no es válido para una cuenta institucional.");
         }
 
-        // Cambiamos el error del documento por un 400 BAD REQUEST
         if (urlDocumento == null || urlDocumento.trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Es obligatorio adjuntar un documento válido.");
         }
@@ -80,28 +73,38 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public List<Usuario> obtenerInstitucionesPendientes() {
-        // 1. Definimos la lista de roles que consideramos como "Instituciones"
+        
         List<RolUsuario> rolesInstitucionales = List.of(
                 RolUsuario.VETERINARIA,
                 RolUsuario.REFUGIO,
                 RolUsuario.MUNICIPALIDAD
         );
 
-        // 2. Pasamos la lista al nuevo método del repositorio
         return usuarioRepository.findByRolInAndCuentaValidadaFalse(rolesInstitucionales);
     }
 
     @Override
     @Transactional
     public Usuario aprobarCuentaInstitucional(Long usuarioId) {
-        // Buscamos al usuario
+    
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         
-        // Cambiamos su estado
         usuario.setCuentaValidada(true);
         
-        // Guardamos los cambios
         return usuarioRepository.save(usuario);
+    }
+
+    
+    @CircuitBreaker(name = "servicioExterno", fallbackMethod = "notificacionFallback")
+    public String notificarNuevoUsuario(String correoElectronico) {
+        
+        throw new RuntimeException("¡El microservicio de Notificaciones está caído!");
+    }
+
+   
+    public String notificacionFallback(String correoElectronico, Exception e) {
+        System.out.println("No se pudo notificar a " + correoElectronico + ". Razón: " + e.getMessage());
+        return "Usuario registrado, pero el correo de bienvenida se enviará más tarde.";
     }
 }

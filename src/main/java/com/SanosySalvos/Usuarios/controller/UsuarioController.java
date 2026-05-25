@@ -57,4 +57,13 @@ public class UsuarioController {
         Usuario usuarioActualizado = usuarioService.solicitarCambioRol(id, nuevoRol, urlDocumento);
         return ResponseEntity.ok(usuarioActualizado);
     }
+
+    // Endpoint temporal para probar el Cortacircuitos
+    // GET http://localhost:8080/api/usuarios/prueba-fallback
+    @GetMapping("/prueba-fallback")
+    public ResponseEntity<String> probarFallback() {
+        // Llamamos al método que sabemos que va a fallar a propósito
+        String respuesta = usuarioService.notificarNuevoUsuario("prueba@mail.com");
+        return ResponseEntity.ok(respuesta);
+    }
 }

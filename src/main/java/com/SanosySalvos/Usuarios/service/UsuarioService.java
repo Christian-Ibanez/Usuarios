@@ -20,4 +20,7 @@ public interface UsuarioService {
 
     // Modificamos este método para recibir la URL o ruta del documento
     Usuario solicitarCambioRol(Long usuarioId, RolUsuario nuevoRol, String urlDocumento);
+
+    // Método para probar Resilience4j
+    String notificarNuevoUsuario(String correoElectronico);
 }
