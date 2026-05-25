@@ -24,41 +24,33 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // 1. Buscamos la cabecera "Authorization" en la petición de Postman/Frontend
         final String authorizationHeader = request.getHeader("Authorization");
 
         String correo = null;
         String jwt = null;
 
-        // 2. Por convención mundial, los tokens JWT siempre empiezan con la palabra "Bearer "
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7); // Cortamos los primeros 7 caracteres ("Bearer ")
+            jwt = authorizationHeader.substring(7); 
             try {
-                correo = jwtUtil.extraerCorreo(jwt); // Usamos tu JwtUtil para desencriptarlo
+                correo = jwtUtil.extraerCorreo(jwt); 
             } catch (Exception e) {
                 System.out.println("Token inválido o manipulado: " + e.getMessage());
             }
         }
 
-        // 3. Si logramos extraer el correo y el usuario aún no ha sido autenticado en este ciclo
         if (correo != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // 4. Le preguntamos a JwtUtil si el token no ha expirado matemáticamente
             if (jwtUtil.validarToken(jwt)) {
                 
-                // 5. ¡Aprobado! Creamos un "Gafete de Visitante" oficial para Spring Security
-                // (Por ahora le pasamos un ArrayList vacío en los roles para mantenerlo simple)
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         correo, null, new ArrayList<>());
                         
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 
-                // 6. Le decimos al sistema: "Conozco a este usuario, déjalo pasar"
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         }
         
-        // 7. Finalmente, enviamos la petición al siguiente paso (tu Controlador)
         chain.doFilter(request, response);
     }
 }

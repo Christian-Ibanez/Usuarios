@@ -19,12 +19,10 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long jwtExpirationInMs;
 
-    // Genera la llave encriptada a partir de tu application.properties
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    // Fabrica un token nuevo usando el correo del usuario
     public String generarToken(String correoElectronico, String rol) {
         Date ahora = new Date();
         Date fechaExpiracion = new Date(ahora.getTime() + jwtExpirationInMs);
@@ -38,12 +36,10 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Extrae el correo del token cuando el usuario hace una petición
     public String extraerCorreo(String token) {
         return extraerTodosLosClaims(token).getSubject();
     }
 
-    // Verifica si el token ya caducó
     public boolean validarToken(String token) {
         try {
             Jwts.parserBuilder()

@@ -11,18 +11,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/usuarios") // Ruta base para todos los endpoints de este controlador
+@RequestMapping("/api/usuarios") 
 @RequiredArgsConstructor
 public class UsuarioController {
 
-    // Inyectamos el servicio (la interfaz, NO la implementación). 
-    // Spring Boot conectará la implementación automáticamente.
     private final UsuarioService usuarioService;
 
     
-
-    // 2. Endpoint para buscar un usuario por su correo (Útil para el Login interno)
-    // GET http://localhost:8080/api/usuarios/correo/juan@email.com
     @GetMapping("/correo/{correoElectronico}")
     public ResponseEntity<Usuario> obtenerUsuarioPorCorreo(@PathVariable String correoElectronico) {
         Usuario usuario = usuarioService.obtenerUsuarioPorCorreo(correoElectronico);
@@ -30,39 +25,31 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
 
-    // 3. Endpoint para que el Administrador vea las veterinarias pendientes
-    // GET http://localhost:8080/api/usuarios/instituciones/pendientes
     @GetMapping("/instituciones/pendientes")
     public ResponseEntity<List<Usuario>> obtenerInstitucionesPendientes() {
         List<Usuario> pendientes = usuarioService.obtenerInstitucionesPendientes();
         return ResponseEntity.ok(pendientes);
     }
 
-    // 4. Endpoint para que el Administrador apruebe una cuenta
-    // PUT http://localhost:8080/api/usuarios/instituciones/5/aprobar
     @PutMapping("/instituciones/{id}/aprobar")
     public ResponseEntity<Usuario> aprobarCuentaInstitucional(@PathVariable Long id) {
         Usuario usuarioAprobado = usuarioService.aprobarCuentaInstitucional(id);
         return ResponseEntity.ok(usuarioAprobado);
     }
 
-    // 5. Endpoint para que un ciudadano solicite cambiar su rol a Institución
-    // PUT http://localhost:8080/api/usuarios/5/solicitar-rol?nuevoRol=VETERINARIA&urlDocumento=ruta/al/certificado.pdf
     @PutMapping("/{id}/solicitar-rol")
     public ResponseEntity<Usuario> solicitarCambioRol(
             @PathVariable Long id, 
             @RequestParam RolUsuario nuevoRol,
-            @RequestParam String urlDocumento) { // Recibimos la ruta del documento
+            @RequestParam String urlDocumento) { 
             
         Usuario usuarioActualizado = usuarioService.solicitarCambioRol(id, nuevoRol, urlDocumento);
         return ResponseEntity.ok(usuarioActualizado);
     }
 
-    // Endpoint temporal para probar el Cortacircuitos
-    // GET http://localhost:8080/api/usuarios/prueba-fallback
     @GetMapping("/prueba-fallback")
     public ResponseEntity<String> probarFallback() {
-        // Llamamos al método que sabemos que va a fallar a propósito
+
         String respuesta = usuarioService.notificarNuevoUsuario("prueba@mail.com");
         return ResponseEntity.ok(respuesta);
     }

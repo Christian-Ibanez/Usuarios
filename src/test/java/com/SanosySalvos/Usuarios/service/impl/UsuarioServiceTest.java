@@ -47,18 +47,15 @@ public class UsuarioServiceTest {
 
     @Test
     void testRegistrarUsuario_Exito() {
-        // Le damos una contraseña al usuario global de prueba que ya tenías
+        
         usuarioPrueba.setContrasena("superSecreta123");
 
-        // Configuramos los simulacros
         when(usuarioRepository.existsByCorreoElectronico(usuarioPrueba.getCorreoElectronico())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("hashFalso123");
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioPrueba);
 
-        // Ejecutamos la acción con el usuarioPrueba
         Usuario resultado = usuarioService.registrarUsuario(usuarioPrueba);
 
-        // Verificaciones
         assertNotNull(resultado);
         assertEquals("juan@email.com", resultado.getCorreoElectronico());
         assertTrue(resultado.getCuentaValidada()); 

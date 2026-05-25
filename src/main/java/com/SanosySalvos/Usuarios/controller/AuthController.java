@@ -23,16 +23,12 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    // 1. ENDPOINT DE REGISTRO (Público)
-    // POST http://localhost:8080/api/usuarios/registro
     @PostMapping("/registro")
     public ResponseEntity<Usuario> registrarUsuario(@RequestBody Usuario nuevoUsuario) {
         Usuario usuarioCreado = usuarioService.registrarUsuario(nuevoUsuario);
         return new ResponseEntity<>(usuarioCreado, HttpStatus.CREATED);
     }
 
-    // 2. ENDPOINT DE LOGIN (Público)
-    // POST http://localhost:8080/api/usuarios/login
     @PostMapping("/login")
     public AuthResponseDTO login(@RequestBody LoginRequestDTO request) {
         

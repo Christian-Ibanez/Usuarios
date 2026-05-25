@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "usuarios")
-@Data // Anotación de Lombok para generar Getters, Setters y toString automáticamente
+@Data 
 @NoArgsConstructor
 @AllArgsConstructor
 public class Usuario {
@@ -25,25 +25,25 @@ public class Usuario {
     private String correoElectronico;
 
     @Column(nullable = false)
-    private String contrasena; // Aquí se guardará el hash generado por Bcrypt
+    private String contrasena;
 
     @Column(length = 20)
     private String telefono;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private RolUsuario rol = RolUsuario.CIUDADANO; // <-- Asignación por defecto
+    private RolUsuario rol = RolUsuario.CIUDADANO; 
 
     @Column(name = "cuenta_validada", nullable = false)
-    private Boolean cuentaValidada = false; // Falso por defecto. Útil para aprobar veterinarias
+    private Boolean cuentaValidada = false;
 
     @Column(name = "fecha_registro", updatable = false)
     private LocalDateTime fechaRegistro;
     
     @Column(name = "url_documento_validacion", length = 500)
-    private String urlDocumentoValidacion; // Aquí guardaremos la ruta o enlace al PDF/Imagen
+    private String urlDocumentoValidacion; 
 
-    // Método que se ejecuta automáticamente antes de guardar por primera vez en PostgreSQL
+    
     @PrePersist
     protected void onCreate() {
         this.fechaRegistro = LocalDateTime.now();
