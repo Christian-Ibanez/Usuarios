@@ -19,14 +19,7 @@ public class UsuarioController {
     // Spring Boot conectará la implementación automáticamente.
     private final UsuarioService usuarioService;
 
-    // 1. Endpoint para registrar un usuario
-    // POST http://localhost:8080/api/usuarios
-    @PostMapping
-    public ResponseEntity<Usuario> registrarUsuario(@RequestBody Usuario nuevoUsuario) {
-        Usuario usuarioCreado = usuarioService.registrarUsuario(nuevoUsuario);
-        // Retornamos 201 (CREATED) porque se creó un nuevo recurso en la base de datos
-        return new ResponseEntity<>(usuarioCreado, HttpStatus.CREATED); 
-    }
+    
 
     // 2. Endpoint para buscar un usuario por su correo (Útil para el Login interno)
     // GET http://localhost:8080/api/usuarios/correo/juan@email.com

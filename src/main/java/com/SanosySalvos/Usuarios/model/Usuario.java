@@ -3,9 +3,7 @@ package com.SanosySalvos.Usuarios.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -14,8 +12,6 @@ import java.time.LocalDateTime;
 @Data // Anotación de Lombok para generar Getters, Setters y toString automáticamente
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 public class Usuario {
 
     @Id

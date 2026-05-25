@@ -189,4 +189,63 @@ public class UsuarioServiceTest {
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
+    // --- CAMINOS TRISTES PARA LLEGAR AL 100% ---
+
+    @Test
+    void obtenerUsuarioPorCorreo_LanzaExcepcion_SiNoExiste() {
+        when(usuarioRepository.findByCorreoElectronico("noexiste@mail.com")).thenReturn(Optional.empty());
+
+        // Cambiamos a RuntimeException.class
+        assertThrows(RuntimeException.class, () -> {
+            usuarioService.obtenerUsuarioPorCorreo("noexiste@mail.com");
+        });
+    }
+
+    @Test
+    void solicitarCambioRol_LanzaExcepcion_SiUsuarioNoExiste() {
+        // Arrange: Simulamos que buscamos un ID falso
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert (Esto cubre el otro lambda$)
+        assertThrows(ResponseStatusException.class, () -> {
+            usuarioService.solicitarCambioRol(999L, RolUsuario.REFUGIO, "Refugio Esperanza");
+        });
+    }
+
+    @Test
+    void solicitarCambioRol_LanzaExcepcion_SiRolNoEsInstitucional() {
+        // Act & Assert: Intentamos pedir el rol CIUDADANO (que no está en la lista de permitidos)
+        // Como el "if" está al principio del método, ni siquiera necesitamos simular el repositorio
+        assertThrows(ResponseStatusException.class, () -> {
+            usuarioService.solicitarCambioRol(1L, RolUsuario.CIUDADANO, "Documento.pdf");
+        });
+    }
+
+    @Test
+    void solicitarCambioRol_LanzaExcepcion_SiDocumentoEstaVacio() {
+        // Act & Assert: Intentamos pedir un rol válido, pero enviamos un string vacío en el documento
+        assertThrows(ResponseStatusException.class, () -> {
+            usuarioService.solicitarCambioRol(1L, RolUsuario.REFUGIO, "   ");
+        });
+    }
+
+    @Test
+    void aprobarCuentaInstitucional_LanzaExcepcion_SiUsuarioNoExiste() {
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // Cambiamos a RuntimeException.class
+        assertThrows(RuntimeException.class, () -> {
+            usuarioService.aprobarCuentaInstitucional(999L);
+        });
+    }
+
+    @Test
+    void solicitarCambioRol_LanzaExcepcion_SiDocumentoEsNulo() {
+        // Act & Assert: Intentamos pedir un rol válido, pero enviamos un null literal en el documento
+        // Esto cubrirá la primera mitad del operador "||" que le faltaba a JaCoCo
+        assertThrows(ResponseStatusException.class, () -> {
+            usuarioService.solicitarCambioRol(1L, RolUsuario.REFUGIO, null);
+        });
+    }
+
 }

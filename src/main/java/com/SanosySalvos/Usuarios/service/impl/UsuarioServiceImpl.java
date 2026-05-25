@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -18,6 +19,8 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     // Inyección de dependencias a través del constructor (gracias a @RequiredArgsConstructor de Lombok)
     private final UsuarioRepository usuarioRepository;
+
+    private final PasswordEncoder passwordEncoder;
     
     // Nota: Aquí también inyectarías el PasswordEncoder de Spring Security más adelante
     // private final PasswordEncoder passwordEncoder;
@@ -32,6 +35,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         // REGLA 1: Todo usuario nuevo nace estrictamente como CIUDADANO y validado
         nuevoUsuario.setRol(RolUsuario.CIUDADANO);
         nuevoUsuario.setCuentaValidada(true); 
+
+        // AQUÍ: Encriptamos la contraseña antes de guardarla
+        nuevoUsuario.setContrasena(passwordEncoder.encode(nuevoUsuario.getContrasena()));
 
         return usuarioRepository.save(nuevoUsuario);
     }
