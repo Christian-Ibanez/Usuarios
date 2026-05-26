@@ -17,7 +17,13 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    
+    @PostMapping("/registro")
+    public ResponseEntity<Usuario> registrarUsuario(@RequestBody Usuario nuevoUsuario) {
+        // Asumiendo que tienes este método en tu UsuarioService
+        Usuario usuarioCreado = usuarioService.registrarUsuario(nuevoUsuario);
+        return new ResponseEntity<>(usuarioCreado, HttpStatus.CREATED);
+    }
+
     @GetMapping("/correo/{correoElectronico}")
     public ResponseEntity<Usuario> obtenerUsuarioPorCorreo(@PathVariable String correoElectronico) {
         Usuario usuario = usuarioService.obtenerUsuarioPorCorreo(correoElectronico);

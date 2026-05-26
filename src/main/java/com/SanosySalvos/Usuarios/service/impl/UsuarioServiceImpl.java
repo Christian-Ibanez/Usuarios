@@ -1,6 +1,6 @@
 package com.SanosySalvos.Usuarios.service.impl;
 
-import com.SanosySalvos.Usuarios.model.RolUsuario; // Enum que debes crear
+import com.SanosySalvos.Usuarios.model.RolUsuario; 
 import com.SanosySalvos.Usuarios.model.Usuario;
 import com.SanosySalvos.Usuarios.repository.UsuarioRepository;
 import com.SanosySalvos.Usuarios.service.UsuarioService;
@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
@@ -19,8 +18,6 @@ import java.util.List;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
-    
 
     @Override
     @Transactional
@@ -32,7 +29,8 @@ public class UsuarioServiceImpl implements UsuarioService {
         nuevoUsuario.setRol(RolUsuario.CIUDADANO);
         nuevoUsuario.setCuentaValidada(true); 
 
-        nuevoUsuario.setContrasena(passwordEncoder.encode(nuevoUsuario.getContrasena()));
+        // Ya no encriptamos aquí. Guardamos la contraseña tal cual llega 
+        // (asumiendo que el microservicio de tu compañero ya la encriptó)
 
         return usuarioRepository.save(nuevoUsuario);
     }
@@ -98,11 +96,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     
     @CircuitBreaker(name = "servicioExterno", fallbackMethod = "notificacionFallback")
     public String notificarNuevoUsuario(String correoElectronico) {
-        
         throw new RuntimeException("¡El microservicio de Notificaciones está caído!");
     }
 
-   
     public String notificacionFallback(String correoElectronico, Exception e) {
         System.out.println("No se pudo notificar a " + correoElectronico + ". Razón: " + e.getMessage());
         return "Usuario registrado, pero el correo de bienvenida se enviará más tarde.";

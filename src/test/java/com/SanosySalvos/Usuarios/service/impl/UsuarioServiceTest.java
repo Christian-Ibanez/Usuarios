@@ -1,6 +1,6 @@
 package com.SanosySalvos.Usuarios.service.impl;
 
-import com.SanosySalvos.Usuarios.model.RolUsuario; // Asegúrate de tener este Enum
+import com.SanosySalvos.Usuarios.model.RolUsuario;
 import com.SanosySalvos.Usuarios.model.Usuario;
 import com.SanosySalvos.Usuarios.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,8 +27,7 @@ public class UsuarioServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    // ELIMINADO: @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UsuarioServiceImpl usuarioService;
@@ -48,10 +46,10 @@ public class UsuarioServiceTest {
     @Test
     void testRegistrarUsuario_Exito() {
         
-        usuarioPrueba.setContrasena("superSecreta123");
+        usuarioPrueba.setContrasena("superSecreta123"); // Ahora se guarda tal cual
 
         when(usuarioRepository.existsByCorreoElectronico(usuarioPrueba.getCorreoElectronico())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("hashFalso123");
+        // ELIMINADO: when(passwordEncoder.encode(anyString())).thenReturn("hashFalso123");
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioPrueba);
 
         Usuario resultado = usuarioService.registrarUsuario(usuarioPrueba);
@@ -72,7 +70,7 @@ public class UsuarioServiceTest {
         });
         
         assertEquals("Error: El correo electrónico ya está registrado.", exception.getMessage());
-        verify(usuarioRepository, never()).save(any(Usuario.class)); // Aseguramos que nunca intentó guardar
+        verify(usuarioRepository, never()).save(any(Usuario.class)); 
     }
 
     @Test
@@ -89,7 +87,6 @@ public class UsuarioServiceTest {
 
     @Test
     void testObtenerInstitucionesPendientes() {
-        // Arrange
         Usuario clinica = new Usuario();
         clinica.setRol(RolUsuario.VETERINARIA);
         clinica.setCuentaValidada(false);
@@ -103,10 +100,8 @@ public class UsuarioServiceTest {
         when(usuarioRepository.findByRolInAndCuentaValidadaFalse(rolesInstitucionales))
                 .thenReturn(Arrays.asList(clinica));
 
-        // Act
         List<Usuario> resultados = usuarioService.obtenerInstitucionesPendientes();
 
-        // Assert
         assertFalse(resultados.isEmpty());
         assertEquals(1, resultados.size());
         assertEquals(RolUsuario.VETERINARIA, resultados.get(0).getRol());
@@ -114,7 +109,6 @@ public class UsuarioServiceTest {
 
     @Test
     void testAprobarCuentaInstitucional_Exito() {
-        // Arrange
         Usuario clinicaPendiente = new Usuario();
         clinicaPendiente.setId(2L);
         clinicaPendiente.setCuentaValidada(false);
@@ -122,10 +116,8 @@ public class UsuarioServiceTest {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(clinicaPendiente));
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(clinicaPendiente); 
 
-        // Act
         Usuario resultado = usuarioService.aprobarCuentaInstitucional(2L);
 
-        // Assert
         assertTrue(resultado.getCuentaValidada()); 
         verify(usuarioRepository, times(1)).save(clinicaPendiente);
     }
@@ -144,7 +136,7 @@ public class UsuarioServiceTest {
         Usuario resultado = usuarioService.solicitarCambioRol(1L, RolUsuario.VETERINARIA, "ruta_documento.pdf");
 
         assertEquals(RolUsuario.VETERINARIA, resultado.getRol());
-        assertFalse(resultado.getCuentaValidada()); // Debe pasar a false
+        assertFalse(resultado.getCuentaValidada()); 
         assertEquals("ruta_documento.pdf", resultado.getUrlDocumentoValidacion());
         verify(usuarioRepository, times(1)).save(ciudadano);
     }
@@ -157,18 +149,16 @@ public class UsuarioServiceTest {
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
     @Test
     void testSolicitarCambioRol_FallaPorDocumentoVacio() {
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            usuarioService.solicitarCambioRol(1L, RolUsuario.VETERINARIA, ""); // String vacío
+            usuarioService.solicitarCambioRol(1L, RolUsuario.VETERINARIA, ""); 
         });
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        
         verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
@@ -183,7 +173,6 @@ public class UsuarioServiceTest {
 
     @Test
     void solicitarCambioRol_LanzaExcepcion_SiUsuarioNoExiste() {
-
         when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> {
@@ -193,7 +182,6 @@ public class UsuarioServiceTest {
 
     @Test
     void solicitarCambioRol_LanzaExcepcion_SiRolNoEsInstitucional() {
-
         assertThrows(ResponseStatusException.class, () -> {
             usuarioService.solicitarCambioRol(1L, RolUsuario.CIUDADANO, "Documento.pdf");
         });
@@ -201,7 +189,6 @@ public class UsuarioServiceTest {
 
     @Test
     void solicitarCambioRol_LanzaExcepcion_SiDocumentoEstaVacio() {
-
         assertThrows(ResponseStatusException.class, () -> {
             usuarioService.solicitarCambioRol(1L, RolUsuario.REFUGIO, "   ");
         });
@@ -218,10 +205,8 @@ public class UsuarioServiceTest {
 
     @Test
     void solicitarCambioRol_LanzaExcepcion_SiDocumentoEsNulo() {
-
         assertThrows(ResponseStatusException.class, () -> {
             usuarioService.solicitarCambioRol(1L, RolUsuario.REFUGIO, null);
         });
     }
-
 }
