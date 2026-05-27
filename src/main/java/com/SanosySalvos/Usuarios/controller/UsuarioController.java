@@ -17,6 +17,13 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
+    @PostMapping("/interno/crear-perfil")
+    public ResponseEntity<Usuario> crearPerfilInicial(@RequestBody String correoNuevoUsuario) {
+        // Lógica para crear un perfil básico en tu BD asociado a ese correo
+        Usuario nuevoPerfil = usuarioService.crearPerfilVacio(correoNuevoUsuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoPerfil);
+    }
+
     @PostMapping("/registro")
     public ResponseEntity<Usuario> registrarUsuario(@RequestBody Usuario nuevoUsuario) {
         // Asumiendo que tienes este método en tu UsuarioService

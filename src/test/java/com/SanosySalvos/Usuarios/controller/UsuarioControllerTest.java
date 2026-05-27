@@ -3,6 +3,8 @@ package com.SanosySalvos.Usuarios.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -145,6 +147,32 @@ public class UsuarioControllerTest {
                 
                 // Esperamos un 200 OK
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void crearPerfilInicial_CreaPerfilYRetornaStatusCreated() throws Exception {
+        // 1. PREPARACIÓN (Arrange)
+        String correoMock = "nuevo@test.com";
+        
+        Usuario perfilGenerado = new Usuario();
+        perfilGenerado.setCorreoElectronico(correoMock);
+        
+        // Simulamos la respuesta del servicio
+        when(usuarioService.crearPerfilVacio(correoMock)).thenReturn(perfilGenerado);
+
+        // 2. EJECUCIÓN Y VERIFICACIÓN (Act & Assert)
+        mockMvc.perform(post("/api/usuarios/interno/crear-perfil")
+                .contentType(org.springframework.http.MediaType.TEXT_PLAIN) // ¡Clave para @RequestBody String!
+                .content(correoMock))
+                
+                // Verificamos el HTTP 201
+                .andExpect(status().isCreated())
+                
+                // Verificamos que devuelva el correo en el JSON de respuesta
+                .andExpect(jsonPath("$.correoElectronico").value(correoMock));
+                
+        // 3. Verificamos que el servicio fue llamado
+        verify(usuarioService, times(1)).crearPerfilVacio(correoMock);
     }
     
 }

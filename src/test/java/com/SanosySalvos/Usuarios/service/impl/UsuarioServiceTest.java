@@ -209,4 +209,72 @@ public class UsuarioServiceTest {
             usuarioService.solicitarCambioRol(1L, RolUsuario.REFUGIO, null);
         });
     }
+
+    //TEST CREAR PERFIL VACÍO
+
+    @Test
+    void crearPerfilVacio_Exito_GuardaUsuarioConRolCiudadano() {
+        // Arrange
+        String correo = "nuevo@test.com";
+        when(usuarioRepository.existsByCorreoElectronico(correo)).thenReturn(false);
+        
+        Usuario usuarioGuardado = new Usuario();
+        usuarioGuardado.setCorreoElectronico(correo);
+        usuarioGuardado.setRol(RolUsuario.CIUDADANO);
+        usuarioGuardado.setCuentaValidada(true);
+        
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioGuardado);
+
+        // Act
+        Usuario resultado = usuarioService.crearPerfilVacio(correo);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(correo, resultado.getCorreoElectronico());
+        assertEquals(RolUsuario.CIUDADANO, resultado.getRol());
+        assertTrue(resultado.getCuentaValidada()); // o la aserción que corresponda a tu boolean
+        verify(usuarioRepository, times(1)).save(any(Usuario.class));
+    }
+
+    @Test
+    void crearPerfilVacio_LanzaExcepcion_SiCorreoYaExiste() {
+        // Arrange
+        String correo = "duplicado@test.com";
+        when(usuarioRepository.existsByCorreoElectronico(correo)).thenReturn(true);
+
+        // Act & Assert
+        org.springframework.web.server.ResponseStatusException exception = assertThrows(
+                org.springframework.web.server.ResponseStatusException.class, 
+                () -> usuarioService.crearPerfilVacio(correo)
+        );
+
+        assertEquals(org.springframework.http.HttpStatus.CONFLICT, exception.getStatusCode());
+        verify(usuarioRepository, never()).save(any(Usuario.class));
+    }
+
+    //TESTS CIRCUIT BREAKER 
+
+    @Test
+    void notificarNuevoUsuario_LanzaRuntimeException() {
+        // Act & Assert
+        RuntimeException exception = assertThrows(
+                RuntimeException.class, 
+                () -> usuarioService.notificarNuevoUsuario("test@test.com")
+        );
+        assertEquals("¡El microservicio de Notificaciones está caído!", exception.getMessage());
+    }
+
+    @Test
+    void notificacionFallback_RetornaMensajeDeContingencia() {
+        // Arrange
+        String correo = "test@test.com";
+        Exception excepcionSimulada = new RuntimeException("Timeout");
+
+        // Act
+        String resultado = usuarioService.notificacionFallback(correo, excepcionSimulada);
+
+        // Assert
+        assertEquals("Usuario registrado, pero el correo de bienvenida se enviará más tarde.", resultado);
+    }
+
 }

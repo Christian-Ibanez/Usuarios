@@ -1,0 +1,25 @@
+services:
+  # 1. BASE DE DATOS DE USUARIOS 
+  postgres-usuarios-db:
+    image: postgres:16 
+    container_name: db_usuarios
+    environment:
+      POSTGRES_USER: postgres      
+      POSTGRES_PASSWORD: Conce123
+      POSTGRES_DB: db_usuarios
+    ports:
+      - "5433:5432"
+    restart: always
+
+  # 2. MICROSERVICIO DE GESTIÓN DE USUARIO
+  usuario-app:
+    build: . 
+    container_name: usuario_service
+    ports:
+      - "8082:8080" 
+    depends_on:
+      - postgres-usuarios-db 
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-usuarios-db:5432/db_usuarios
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Conce123

@@ -37,6 +37,25 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional
+    public Usuario crearPerfilVacio(String correoElectronico) {
+        
+        // 1. Verificamos por seguridad que el micro de Auth no nos envíe un correo repetido
+        if (usuarioRepository.existsByCorreoElectronico(correoElectronico)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El perfil ya existe para este correo.");
+        }
+
+        // 2. Creamos el perfil usando tu estructura actual
+        Usuario nuevoUsuario = new Usuario();
+        nuevoUsuario.setCorreoElectronico(correoElectronico);
+        nuevoUsuario.setRol(RolUsuario.CIUDADANO); // Asignamos el rol por defecto
+        nuevoUsuario.setCuentaValidada(true); // O false, dependiendo de cómo manejen el flujo inicial
+
+        // 3. Guardamos
+        return usuarioRepository.save(nuevoUsuario);
+    }
+
+    @Override
+    @Transactional
     public Usuario solicitarCambioRol(Long usuarioId, RolUsuario nuevoRol, String urlDocumento) {
         
         List<RolUsuario> rolesPermitidos = List.of(

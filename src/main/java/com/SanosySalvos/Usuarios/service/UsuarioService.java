@@ -18,4 +18,6 @@ public interface UsuarioService {
     Usuario solicitarCambioRol(Long usuarioId, RolUsuario nuevoRol, String urlDocumento);
 
     String notificarNuevoUsuario(String correoElectronico);
+
+    Usuario crearPerfilVacio(String correoElectronico);
 }
